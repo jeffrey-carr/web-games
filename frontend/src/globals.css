@@ -1,0 +1,33 @@
+html {
+  --red: #F06449;
+  --blue: #5BC3EB;
+  --light: #EDE6E3;
+  --gray: #DADAD9;
+  --dark: #36382E;
+  --font-family: "Dosis", serif;
+  
+  font-family: var(--font-family);
+}
+
+body {
+  color: white;
+  background-color: #0d1117;
+  
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-family: "Doto";
+}
+
+button {
+  font-family: var(--font-family);
+}
+button:hover {
+  cursor: pointer;
+}
+
+div {
+  position: relative;
+}
