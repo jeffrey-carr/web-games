@@ -1,14 +1,18 @@
 <script lang="ts">
 	import { Board, Button, Dropdown, Spinner } from '$lib/components';
+	import PopMessage from '$lib/components/PopMessage.svelte';
 	import type { BoardStyle, Coordinate, DropdownOption } from '$lib/types';
 
 	const DEFAULT_SIZE = 6;
+	const SIZES = [4, 6, 8];
 
 	let size = $state(DEFAULT_SIZE);
 	let err = $state<string | null>(null);
 
-	let board = $state<number[][]>([[]]);
+	let board = $state<number[][]>([]);
 	let lockedCells = $state<Coordinate[]>([]);
+
+	let showCorrect = $state(false);
 
 	let style = $state<BoardStyle>('colors');
 
@@ -48,21 +52,20 @@
 			return;
 		}
 
+		board = [];
+
 		let generatingTimeout: number | undefined;
-		let longGeneratingTimeout: number | undefined;
 
 		generatingLevel = 1;
 		generatingTimeout = setInterval(() => {
 			generatingLevel = (generatingLevel + 1) % GENERATING_MESSAGES.length;
-		}, 5000);
+		}, 10000);
 
 		const boardRequest = await fetch(`http://localhost:3001/new-game?size=${size}`);
 		const data = await boardRequest.json();
 		board = data['board'];
 		lockedCells = getLockedCells(board);
 
-		// clearTimeout(generatingTimeout);
-		// clearTimeout(longGeneratingTimeout);
 		clearInterval(generatingTimeout);
 		generatingLevel = 0;
 	};
@@ -96,32 +99,36 @@
 		const response = await validateRequest.json();
 
 		if (response['valid']) {
-			err = 'Valid!';
-		} else {
-			err = 'Invalid!';
+			showCorrect = true;
 		}
 
 		validating = false;
 		return true;
 	};
+
+	const newGame = () => {
+		showCorrect = false;
+		getBoard();
+	};
 </script>
 
 <div class="container">
+	{#snippet sizeButton(n: number)}
+		<button class={`size-button ${n === size ? 'selected' : ''}`} onclick={() => (size = n)}>
+			{n}
+		</button>
+	{/snippet}
+
 	<h1 class="title">Binoku</h1>
 	<div class="button-container">
 		<Button onclick={getBoard}>Generate puzzle</Button>
 		<Button onclick={checkSolution}>Check solution</Button>
 		<Dropdown options={styleOptions}>Style</Dropdown>
 	</div>
-	<div>
-		{#snippet sizeButton(n: number)}
-			<button class={`size-button ${n === size ? 'selected' : ''}`} onclick={() => (size = n)}>
-				{n}
-			</button>
-		{/snippet}
-		{@render sizeButton(4)}
-		{@render sizeButton(6)}
-		{@render sizeButton(8)}
+	<div class="buttons-container">
+		{#each SIZES as size}
+			{@render sizeButton(size)}
+		{/each}
 	</div>
 	{#if generatingLevel > 0}
 		<Spinner />
@@ -130,6 +137,30 @@
 		{/each}
 	{:else if board.length > 0}
 		<Board bind:board {lockedCells} {style} />
+
+		{#if showCorrect}
+			<PopMessage>
+				<div class="correct-message">
+					<h1 class="correct-message-header">Correct!</h1>
+					<div class="correct-message-body">
+						<p>You completed a {board.length}x{board.length} puzzle in {0}</p>
+						<div class="buttons-container">
+							{#each SIZES as size}
+								{@render sizeButton(size)}
+							{/each}
+						</div>
+						<div class="buttons-container">
+							<Button onclick={newGame}>New Game</Button>
+							<Button
+								onclick={() => {
+									showCorrect = false;
+								}}>View board</Button
+							>
+						</div>
+					</div>
+				</div>
+			</PopMessage>
+		{/if}
 	{/if}
 </div>
 
@@ -184,9 +215,7 @@
 	.size-button.selected {
 		--move-x-rem: 0.1rem;
 		--move-y-rem: calc(var(--move-x-rem) * -1);
-		color: var(--light);
-		background-color: var(--dark);
-		border-color: var(--light);
+		background-color: var(--gray);
 		transform: translate(var(--move-x-rem), var(--move-y-rem));
 	}
 	.size-button.selected:nth-child(odd) {
@@ -194,6 +223,25 @@
 	}
 	.size-button.selected:nth-child(even) {
 		box-shadow: var(--move-y-rem) var(--move-x-rem) var(--blue);
+	}
+
+	.correct-message-header {
+		font-family: 'Spicy Rice', Impact;
+		font-size: 5rem;
+		margin: 0;
+	}
+
+	.correct-message-body {
+		display: flex;
+		flex-direction: column;
+		justify-content: start;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.buttons-container {
+		display: flex;
+		gap: 0.5rem;
 	}
 
 	@keyframes slide-in {
