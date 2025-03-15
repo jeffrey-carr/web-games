@@ -2,10 +2,12 @@
 	let {
 		onclick,
 		size = 'fit',
+		disabled = false,
 		children
 	}: {
 		onclick: () => void;
 		size?: 'fit' | 'small' | 'medium' | 'large' | 'fill' | 'fill-width';
+		disabled?: boolean;
 		children?: () => any;
 	} = $props();
 </script>
@@ -33,6 +35,11 @@
 	.button:hover {
 		color: var(--light);
 		background-color: var(--dark);
+	}
+
+	.button:disabled {
+		background-color: var(--gray);
+		color: var(--dark);
 	}
 
 	.button.small {

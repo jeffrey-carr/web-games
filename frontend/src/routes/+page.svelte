@@ -122,7 +122,13 @@
 	<h1 class="title">Binoku</h1>
 	<div class="button-container">
 		<Button onclick={getBoard}>Generate puzzle</Button>
-		<Button onclick={checkSolution}>Check solution</Button>
+		<Button onclick={checkSolution} disabled={validating}>
+			{#if validating}
+				<Spinner />
+			{:else}
+				Check Solution
+			{/if}
+		</Button>
 		<Dropdown options={styleOptions}>Style</Dropdown>
 	</div>
 	<div class="buttons-container">
