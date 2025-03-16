@@ -3,10 +3,14 @@ package main
 import (
 	"binoku/controllers"
 	"binoku/entities"
+	"binoku/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 func handler(w http.ResponseWriter, r *http.Request, handle func(w http.ResponseWriter, r *http.Request)) {
@@ -113,15 +117,37 @@ func handleValidateAnswer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	envStr, ok := os.LookupEnv(entities.EnvironmentDeploymentVariable)
+	if !ok {
+		panic("could not find environment variable")
+	}
+	environment := entities.EnvironmentDeployment(envStr)
+	if utils.IsZero(environment) {
+		panic("could not cast deployment environment variable")
+	}
+
+	var configFile string
+	if environment == entities.DeploymentProd {
+		configFile = "config.prod.yaml"
+	} else {
+		configFile = "config.dev.yaml"
+	}
+
+	// Read config file
+	config, err := utils.ReadConfig(configFile)
+	if err != nil {
+		panic(errors.Wrap(err, "error reading config file"))
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handler(w, r, func(w http.ResponseWriter, r *http.Request) {
+		utils.NewHandler(config, w, r, func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("hello world"))
 		})
 	})
-	http.HandleFunc("/new-game", func(w http.ResponseWriter, r *http.Request) { handler(w, r, handleNewGame) })
-	http.HandleFunc("/validate-game", func(w http.ResponseWriter, r *http.Request) { handler(w, r, handleValidateAnswer) })
+	http.HandleFunc("/new-game", func(w http.ResponseWriter, r *http.Request) { utils.NewHandler(config, w, r, handleNewGame) })
+	http.HandleFunc("/validate-game", func(w http.ResponseWriter, r *http.Request) { utils.NewHandler(config, w, r, handleValidateAnswer) })
 
-	port := 3001
+	port := config.Port
 	fmt.Printf("Server listening on %d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

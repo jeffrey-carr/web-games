@@ -1,0 +1,3 @@
+environment: prod
+frontendDomain: https://games.jeffreycarr.dev
+port: 3001
