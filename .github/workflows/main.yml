@@ -63,3 +63,5 @@ jobs:
             # Extract tar file
             tar -xvf ~/deploy.tar -C .
             sudo systemctl restart server-service
+      - name: Deploy frontend
+        run: curl -X POST "https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/${{ secrets.CLOUDFLARE_WEBHOOK_ID }}"
