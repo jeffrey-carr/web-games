@@ -13,15 +13,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func handler(w http.ResponseWriter, r *http.Request, handle func(w http.ResponseWriter, r *http.Request)) {
-	// Allow frontend through CORs
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	handle(w, r)
-}
-
 func validateSize(size int) (bool, string) {
 	if size%2 != 0 {
 		return false, "Board size must be even"
@@ -128,6 +119,7 @@ func main() {
 
 	var configFile string
 	if environment == entities.DeploymentProd {
+		fmt.Println("Using production config")
 		configFile = "config.prod.yaml"
 	} else {
 		configFile = "config.dev.yaml"
@@ -153,6 +145,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("listening")
 }
