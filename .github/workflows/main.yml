@@ -24,7 +24,7 @@ jobs:
 
       - name: Copy config files
         working-directory: backend
-        run: cp config.prod.yaml build/
+        run: cp config.prod.yaml ../build/
 
       - name: Zip build
         run: tar -cvf ${{ env.deploy-tar-name }} ./build
