@@ -1,0 +1,65 @@
+name: Build and deploy
+env:
+  deploy-tar-name: deploy.tar
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Go 1.23.1
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.1
+
+      - name: Build backend
+        working-directory: backend
+        run: go build -o ../build/web_games .
+
+      - name: Zip build
+        run: tar -cvf ${{ env.deploy-tar-name }} ./build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-tar
+          path: ${{ env.deploy-tar-name }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-tar
+
+      - name: Copy build to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ vars.SERVER_IP }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: ${{ env.deploy-tar-name }}
+          target: "~/."
+
+      - name: Unzip tar
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.SERVER_IP }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            # Extract tar file
+            tar -xvf ~/deploy.tar -C .
+            sudo systemctl restart server-service
