@@ -1,0 +1,32 @@
+name: Build and deploy
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run build script
+        run: ./build.sh
+
+      - name: Zip build
+        run: tar -cvf deploy.tar ./build/
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Copy build to server
+      - uses: appleboy/scp-actions@master
+        with:
+          host: ${{ variables.SERVER_IP }}
+          username: ${{ variables.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "deploy.tar"
+          target: "~/deploy.tar"
