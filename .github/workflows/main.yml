@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Copy build to server
-      - uses: appleboy/scp-actions@master
+        uses: appleboy/scp-actions@master
         with:
           host: ${{ variables.SERVER_IP }}
           username: ${{ variables.SSH_USERNAME }}
