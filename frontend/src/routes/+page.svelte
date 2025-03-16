@@ -2,11 +2,10 @@
 	import { Board, Button, Dropdown, Spinner } from '$lib/components';
 	import PopMessage from '$lib/components/PopMessage.svelte';
 	import type { BoardStyle, Coordinate, DropdownOption } from '$lib/types';
-	import { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } from '$env/static/public';
+	import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
 	const DEFAULT_SIZE = 6;
 	const SIZES = [4, 6, 8];
-	const BACKEND_URL = `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}`;
 
 	let size = $state(DEFAULT_SIZE);
 	let err = $state<string | null>(null);
@@ -63,7 +62,7 @@
 			generatingLevel = (generatingLevel + 1) % GENERATING_MESSAGES.length;
 		}, 10000);
 
-		const boardRequest = await fetch(`${BACKEND_URL}/new-game?size=${size}`);
+		const boardRequest = await fetch(`${PUBLIC_BACKEND_URL}/new-game?size=${size}`);
 		const data = await boardRequest.json();
 		board = data['board'];
 		lockedCells = getLockedCells(board);
@@ -94,7 +93,7 @@
 			return false;
 		}
 
-		const validateRequest = await fetch(`${BACKEND_URL}/validate-game`, {
+		const validateRequest = await fetch(`${PUBLIC_BACKEND_URL}/validate-game`, {
 			method: 'POST',
 			body: JSON.stringify({ board })
 		});
