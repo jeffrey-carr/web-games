@@ -1,3 +1,5 @@
 environment: prod
 frontendDomain: '*'
 port: 8080
+fullCertPath: "/etc/letsencrypt/live/web-games.backend.jeffreycarr.dev/fullchain.pem"
+privateKeyPath: "/etc/letsencrypt/live/web-games.backend.jeffreycarr.dev/privkey.pem"

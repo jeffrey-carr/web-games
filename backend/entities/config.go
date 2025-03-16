@@ -17,4 +17,6 @@ type Config struct {
 	Environment    EnvironmentDeployment `yaml:"environment"`
 	FrontendDomain string                `yaml:"frontendDomain"`
 	Port           int                   `yaml:"port"`
+	FullCertPath   string                `yaml:"fullCertPath"`
+	PrivateKeyPath string                `yaml:"privateKeyPath"`
 }

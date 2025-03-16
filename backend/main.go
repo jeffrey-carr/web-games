@@ -140,8 +140,14 @@ func main() {
 	http.HandleFunc("/validate-game", func(w http.ResponseWriter, r *http.Request) { utils.NewHandler(config, w, r, handleValidateAnswer) })
 
 	port := config.Port
+	listenAddr := fmt.Sprintf(":%d", port)
 	fmt.Printf("Server listening on %d\n", port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if environment == entities.DeploymentProd {
+		err = http.ListenAndServeTLS(listenAddr, config.FullCertPath, config.PrivateKeyPath, nil)
+	} else {
+		err = http.ListenAndServe(listenAddr, nil)
+	}
+
 	if err != nil {
 		panic(err)
 	}
