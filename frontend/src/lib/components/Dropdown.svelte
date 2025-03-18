@@ -41,7 +41,7 @@
 
 <style>
 	.container {
-		--height-rem: 3rem;
+		--height-rem: 2.5rem;
 		--width-rem: 8rem;
 		--option-height-rem: calc(var(--height-rem) * 0.8);
 		--option-width-rem: calc(var(--width-rem) * 0.8);

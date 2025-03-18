@@ -1,8 +1,23 @@
 <script lang="ts">
 	import lock from '$lib/assets/lock.svg';
 
+	const buildClassStr = (value: number, position?: string, isHint?: boolean): string => {
+		let str = position ?? '';
+
+		if (value >= 0) {
+			str = `${str} ${value === 0 ? 'zero' : 'one'}`;
+		}
+
+		if (isHint) {
+			str = `${str} hint`;
+		}
+
+		return str.trim();
+	};
+
 	let {
 		value = $bindable(),
+		isHint = false,
 		locked = false,
 		position = '',
 		zeroColor,
@@ -10,12 +25,15 @@
 		children
 	}: {
 		value: number;
+		isHint?: boolean;
 		zeroColor?: string;
 		oneColor?: string;
 		locked?: boolean;
 		position?: string;
 		children?: () => any;
 	} = $props();
+
+	let containerClassStr = $derived(buildClassStr(value, position, isHint));
 
 	const change = () => {
 		if (value === 1) {
@@ -27,7 +45,7 @@
 </script>
 
 <div
-	class={`container ${position} ${value >= 0 ? (value === 0 ? 'zero' : 'one') : ''}`}
+	class={`container ${containerClassStr}`}
 	style={`--zeroColor: ${zeroColor ?? 'var(--blue)'}; --oneColor: ${oneColor ?? 'var(--red)'}`}
 >
 	<button aria-label="board cell" class="button" onclick={change} disabled={locked}>
@@ -79,6 +97,10 @@
 
 	.one {
 		background-color: var(--oneColor);
+	}
+
+	.hint {
+		border: 2px solid var(--red);
 	}
 
 	.button {

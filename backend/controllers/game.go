@@ -10,7 +10,7 @@ import (
 // GameManager represents a game manager
 type GameManager interface {
 	GenerateBoard(int) (entities.Game, error)
-	ValidateBoard(board [][]int) bool
+	ValidateBoard(board [][]int) (bool, entities.InvalidBoardHint)
 }
 
 type gameManager struct{}
@@ -26,11 +26,13 @@ func (gm gameManager) GenerateBoard(size int) (entities.Game, error) {
 	return entities.Game{Board: board}, nil
 }
 
-func (gm gameManager) ValidateBoard(board [][]int) bool {
+func (gm gameManager) ValidateBoard(board [][]int) (bool, entities.InvalidBoardHint) {
 	// Confirm there are no empty spaces
-	for _, row := range board {
+	for i, row := range board {
 		if slices.Contains(row, -1) {
-			return false
+			return false, entities.InvalidBoardHint{
+				Rows: []int{i},
+			}
 		}
 	}
 
@@ -95,33 +97,72 @@ func backtrackFill(board [][]int, row int, col int) bool {
 	return false
 }
 
-func boardIsValid(board [][]int) bool {
+// boardIsValid validates that a board is correct. Returns the
+func boardIsValid(board [][]int) (bool, entities.InvalidBoardHint) {
 	// The game has 3 rules:
 	// 1. There must be an equal number of 1's and 0's in each row/column
 	// 2. There cannot be more than 2 consecutive values next to each other in each row/column
 	// 3. There cannot be any identical rows or any identical columns
-	for n := range board {
-		rIsValid := rowIsValid(utils.DuplicateBoard(board), n)
-		cIsValid := colIsValid(utils.DuplicateBoard(board), n)
-
-		if !rIsValid || !cIsValid {
-			return false
+	for rowIndex, row := range board {
+		isRuleOneValid := validateRuleOne(row)
+		if !isRuleOneValid {
+			return false, entities.InvalidBoardHint{
+				Rows: []int{rowIndex},
+			}
+		}
+		isRuleTwoValid := validateRuleTwo(row)
+		if !isRuleTwoValid {
+			return false, entities.InvalidBoardHint{
+				Rows: []int{rowIndex},
+			}
+		}
+		isRuleThreeValid, offendingRowIndex := validateRuleThree(rowIndex, board)
+		if !isRuleThreeValid {
+			return false, entities.InvalidBoardHint{
+				Rows: []int{rowIndex, offendingRowIndex},
+			}
 		}
 	}
-	return true
+
+	// Transpose matrix 90 degrees and check the columns
+	transposed := utils.TransposeMatrix(board)
+	for colIndex, col := range transposed {
+		isRuleOneValid := validateRuleOne(col)
+		if !isRuleOneValid {
+			return false, entities.InvalidBoardHint{
+				Cols: []int{colIndex},
+			}
+		}
+		isRuleTwoValid := validateRuleTwo(col)
+		if !isRuleTwoValid {
+			return false, entities.InvalidBoardHint{
+				Cols: []int{colIndex},
+			}
+		}
+		isRuleThreeValid, offendingColIndex := validateRuleThree(colIndex, transposed)
+		if !isRuleThreeValid {
+			return false, entities.InvalidBoardHint{
+				Rows: []int{colIndex, offendingColIndex},
+			}
+		}
+	}
+
+	return true, entities.InvalidBoardHint{}
+
+	// for n := range board {
+	// 	rIsValid := rowIsValid(utils.DuplicateBoard(board), n)
+	// 	cIsValid := colIsValid(utils.DuplicateBoard(board), n)
+
+	// 	if !rIsValid || !cIsValid {
+	// 		return false
+	// 	}
+	// }
+	// return true
 }
 
-func valueIsValid(toValidate [][]int, row int, col int, value int) bool {
-	board := utils.DuplicateBoard(toValidate)
-	board[row][col] = value
-
-	return boardIsValid(board)
-}
-
-func rowIsValid(board [][]int, rowIndex int) bool {
-	row := board[rowIndex]
+// 1. There must be an equal number of 1's and 0's in each row/column
+func validateRuleOne(row []int) bool {
 	size := len(row)
-
 	rowZeros, rowOnes := 0, 0
 	for _, value := range row {
 		if value == 0 {
@@ -137,6 +178,11 @@ func rowIsValid(board [][]int, rowIndex int) bool {
 		return false
 	}
 
+	return true
+}
+
+// 2. There cannot be more than 2 consecutive values next to each other in each row/column
+func validateRuleTwo(row []int) bool {
 	// Rule 2
 	for i, value := range row {
 		if i < 2 {
@@ -152,9 +198,20 @@ func rowIsValid(board [][]int, rowIndex int) bool {
 		}
 	}
 
-	// Rule 3
-	for i, innerRow := range board {
-		if i == rowIndex {
+	return true
+}
+
+// 3. There cannot be any identical rows or any identical columns
+// Returns whether the rule is valid. If not, provides the index of
+// the first matched column
+func validateRuleThree(rowIndex int, board [][]int) (bool, int) {
+	if rowIndex < 0 || rowIndex > len(board) {
+		return false, -1
+	}
+
+	row := board[rowIndex]
+	for innerRowIndex, innerRow := range board {
+		if innerRowIndex == rowIndex {
 			continue
 		}
 
@@ -165,70 +222,19 @@ func rowIsValid(board [][]int, rowIndex int) bool {
 
 			return item == innerItem
 		}) {
-			return false
+			return false, innerRowIndex
 		}
 	}
 
-	return true
+	return true, -1
 }
 
-func colIsValid(board [][]int, colIndex int) bool {
-	// Get the column values
-	col := []int{}
-	for _, row := range board {
-		col = append(col, row[colIndex])
-	}
-	size := len(col)
+func valueIsValid(toValidate [][]int, row int, col int, value int) bool {
+	board := utils.DuplicateBoard(toValidate)
+	board[row][col] = value
 
-	colZeros, colOnes := 0, 0
-	for _, value := range col {
-		if value == 0 {
-			colZeros++
-		}
-		if value == 1 {
-			colOnes++
-		}
-	}
-
-	// Rule 1
-	if colZeros > size/2 || colOnes > size/2 {
-		return false
-	}
-
-	// Rule 2
-	for i, value := range col {
-		if i < 2 {
-			continue
-		}
-
-		if value < 0 {
-			continue
-		}
-
-		if value == col[i-1] && value == col[i-2] {
-			return false
-		}
-	}
-
-	// Rule 3
-	// To confirm columns, transpose the matrix
-	transposed := utils.RotateMatrix(board)
-	for i, column := range transposed {
-		if slices.Contains(column, -1) {
-			continue
-		}
-		for j := i + 1; j < len(transposed); j++ {
-			if slices.Contains(transposed[j], -1) {
-				continue
-			}
-
-			if utils.IsEqualSlices(column, transposed[j]) {
-				return false
-			}
-		}
-	}
-
-	return true
+	isValid, _ := boardIsValid(board)
+	return isValid
 }
 
 func backtrackSolve(board [][]int) [][]int {

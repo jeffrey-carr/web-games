@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Board, Button, Dropdown, Spinner } from '$lib/components';
 	import PopMessage from '$lib/components/PopMessage.svelte';
-	import type { BoardStyle, Coordinate, DropdownOption } from '$lib/types';
+	import type { InvalidHint, BoardStyle, Coordinate, DropdownOption } from '$lib/types';
 	import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
 	const DEFAULT_SIZE = 6;
@@ -13,6 +13,17 @@
 	let board = $state<number[][]>([]);
 	let lockedCells = $state<Coordinate[]>([]);
 
+	const HINT_DURATION_MS = 3500;
+	let hint = $state<InvalidHint>();
+	let hintTimer = $state<number | undefined>();
+	const setHint = (newHint: InvalidHint) => {
+		clearTimeout(hintTimer);
+		hint = newHint;
+		hintTimer = setTimeout(() => {
+			hint = undefined;
+		}, HINT_DURATION_MS);
+	};
+
 	let showCorrect = $state(false);
 
 	let style = $state<BoardStyle>('colors');
@@ -23,6 +34,7 @@
 	// 3 - Generation (very long)
 	// 4 - Generation (very very long)
 	let generatingLevel = $state(0);
+	let generating = $derived(generatingLevel > 0);
 	const GENERATING_MESSAGES = [
 		'Generating puzzle...',
 		'This is taking a while, sorry',
@@ -59,7 +71,7 @@
 
 		generatingLevel = 1;
 		generatingTimeout = setInterval(() => {
-			generatingLevel = (generatingLevel + 1) % GENERATING_MESSAGES.length;
+			generatingLevel = Math.min(GENERATING_MESSAGES.length, generatingLevel + 1);
 		}, 10000);
 
 		const boardRequest = await fetch(`${PUBLIC_BACKEND_URL}/new-game?size=${size}`);
@@ -86,21 +98,16 @@
 
 	const checkSolution = async (): Promise<boolean> => {
 		validating = true;
-		// Check that every space is filled in
-		if (board.some((row) => row.some((cell) => cell < 0))) {
-			validating = false;
-			err = 'Invalid!';
-			return false;
-		}
-
 		const validateRequest = await fetch(`${PUBLIC_BACKEND_URL}/validate-game`, {
 			method: 'POST',
 			body: JSON.stringify({ board })
 		});
-		const response = await validateRequest.json();
 
+		const response = await validateRequest.json();
 		if (response['valid']) {
 			showCorrect = true;
+		} else if (response['hint']) {
+			setHint(response['hint']);
 		}
 
 		validating = false;
@@ -122,10 +129,10 @@
 
 	<h1 class="title">Binoku</h1>
 	<div class="button-container">
-		<Button onclick={getBoard}>Generate puzzle</Button>
-		<Button onclick={checkSolution} disabled={validating}>
+		<Button size="medium" onclick={getBoard}>Generate puzzle</Button>
+		<Button size="medium" onclick={checkSolution} disabled={validating}>
 			{#if validating}
-				<Spinner />
+				<Spinner color="dark" />
 			{:else}
 				Check Solution
 			{/if}
@@ -137,13 +144,15 @@
 			{@render sizeButton(size)}
 		{/each}
 	</div>
-	{#if generatingLevel > 0}
-		<Spinner />
+	{#if generating}
+		<div class="spinner-container">
+			<Spinner />
+		</div>
 		{#each { length: generatingLevel } as _, i}
 			<p class="loading-message">{GENERATING_MESSAGES[i]}</p>
 		{/each}
 	{:else if board.length > 0}
-		<Board bind:board {lockedCells} {style} />
+		<Board bind:board {lockedCells} {style} {hint} />
 
 		{#if showCorrect}
 			<PopMessage>
@@ -177,13 +186,22 @@
 		flex-direction: column;
 		justify-content: start;
 		align-items: center;
-		gap: 1rem;
+		gap: 2rem;
 
 		height: 100vh;
 		width: 100vw;
 	}
 
+	.spinner-container {
+		--size-rem: 2.5rem;
+		height: var(--size-rem);
+		width: var(--size-rem);
+	}
+
 	.loading-message {
+		margin: 0;
+		padding: 0;
+
 		animation: slide-in 200ms ease-out;
 	}
 

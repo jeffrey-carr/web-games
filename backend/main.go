@@ -92,10 +92,11 @@ func handleValidateAnswer(w http.ResponseWriter, r *http.Request) {
 	controller := controllers.NewGameManager()
 
 	// Validate board
-	isValid := controller.ValidateBoard(validateRequest.Board)
+	isValid, invalidHint := controller.ValidateBoard(validateRequest.Board)
 
 	response := entities.ValidateGameResponse{
 		Valid: isValid,
+		Hint:  invalidHint,
 	}
 	marshalledResponse, err := json.Marshal(response)
 	if err != nil {

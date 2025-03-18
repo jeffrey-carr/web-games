@@ -1,30 +1,37 @@
-<script lang="ts"></script>
+<script lang="ts">
+	let { color = 'light' }: { color?: 'light' | 'dark' } = $props();
+</script>
 
-<span class="spinner"></span>
+<span class={`spinner ${color}`}></span>
 
 <style>
 	.spinner {
-		width: 48px;
-		height: 48px;
-		border: 3px solid #fff;
+		--large-spinner-color: var(--light);
+		height: 100%;
+		aspect-ratio: 1 / 1;
+		border: 3px solid var(--large-spinner-color);
 		border-radius: 50%;
 		display: inline-block;
 		position: relative;
 		box-sizing: border-box;
 		animation: rotation 1s linear infinite;
 	}
+	.dark {
+		--large-spinner-color: var(--dark);
+	}
+
 	.spinner::after {
 		content: '';
-		box-sizing: border-box;
 		position: absolute;
 		left: 50%;
 		top: 50%;
 		transform: translate(-50%, -50%);
-		width: 40px;
-		height: 40px;
+		width: 80%;
+		height: 80%;
 		border-radius: 50%;
 		border: 3px solid transparent;
-		border-bottom-color: #ff3d00;
+		border-bottom-color: var(--red);
+		box-sizing: border-box;
 	}
 
 	@keyframes rotation {

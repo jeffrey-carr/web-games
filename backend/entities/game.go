@@ -29,3 +29,9 @@ type Coordinate struct {
 	Col int `json:"x"`
 	Row int `json:"y"`
 }
+
+// InvalidBoardHint is the hint shown to the user when their board is invalid
+type InvalidBoardHint struct {
+	Rows []int `json:"rows"`
+	Cols []int `json:"cols"`
+}

@@ -1,13 +1,15 @@
 <script lang="ts">
-	import type { BoardStyle, Coordinate } from '$lib/types';
+	import type { BoardStyle, Coordinate, InvalidHint } from '$lib/types';
 	import Cell from './Cell.svelte';
 
 	let {
 		board = $bindable(),
+		hint,
 		style = 'colors',
 		lockedCells
 	}: {
 		board: number[][];
+		hint?: InvalidHint;
 		style?: BoardStyle;
 		lockedCells: Coordinate[];
 	} = $props();
@@ -35,6 +37,18 @@
 	const isLocked = (row: number, col: number): boolean => {
 		return lockedCells.findIndex((cell) => cell.row === row && cell.col === col) >= 0;
 	};
+
+	const isHintCell = (row: number, col: number): boolean => {
+		if (hint?.rows?.includes(row)) {
+			return true;
+		}
+
+		if (hint?.cols?.includes(col)) {
+			return true;
+		}
+
+		return false;
+	};
 </script>
 
 <div class="container" style={`--size: ${board.length}`}>
@@ -46,6 +60,7 @@
 				position={getPosition(rowI, colI)}
 				zeroColor={style === 'numbers' ? 'var(--gray)' : undefined}
 				oneColor={style === 'numbers' ? 'var(--gray)' : undefined}
+				isHint={isHintCell(rowI, colI)}
 			>
 				{#if style === 'numbers' && cell >= 0}
 					{cell}
@@ -60,6 +75,7 @@
 		--container-size: min(50vw, 50vh);
 
 		display: grid;
+		gap: 0.5rem;
 		grid-template-columns: repeat(var(--size, 0), 1fr);
 
 		height: var(--container-size);

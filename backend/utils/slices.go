@@ -64,8 +64,8 @@ func IsEqualSlices(a []int, b []int) bool {
 	return slices.Equal(a, b)
 }
 
-// RotateMatrix creates a new matrix where each column of the original becomes a row.
-func RotateMatrix(matrix [][]int) [][]int {
+// TransposeMatrix rotates the matrix 90 degrees clockwise
+func TransposeMatrix(matrix [][]int) [][]int {
 	transposed := DuplicateBoard(matrix)
 	n := len(transposed)
 	// Handle the empty matrix case.

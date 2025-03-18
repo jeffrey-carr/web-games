@@ -20,6 +20,11 @@
 	.button {
 		--transition-ms: 200ms;
 
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
 		background-color: var(--light);
 
 		border: 1px solid var(--dark);

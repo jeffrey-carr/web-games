@@ -63,10 +63,8 @@
 		// Update confetti position
 		confetti = confetti.map((piece) => updateConfetti(piece));
 		// Clear trash confetti
-		console.log('height', canvas.height);
 		const before = confetti.length;
 		confetti = confetti.filter((piece) => piece.sizePx > 0 && piece.y < (canvas?.height ?? 500));
-		console.log(`Removed ${before - confetti.length} pieces of confetti`);
 
 		// Fill in more confetti
 		confetti.push(...generateConfetti(MAX_CONFETTI - confetti.length));
