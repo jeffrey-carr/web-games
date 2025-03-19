@@ -63,6 +63,12 @@
 
 		board[lastMove.row][lastMove.col] = lastMove.value;
 	};
+
+	const resetBoard = () => {
+		while (moveStack.size() > 0) {
+			undoMove();
+		}
+	};
 </script>
 
 <div class="container" style={`--size: ${board.length}`}>
@@ -86,6 +92,7 @@
 </div>
 <div class="buttons-container">
 	<Button onclick={undoMove} disabled={noMoves}>Undo last move</Button>
+	<Button onclick={resetBoard} disabled={noMoves}>Reset board</Button>
 </div>
 
 <style>
