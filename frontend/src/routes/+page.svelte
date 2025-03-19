@@ -134,7 +134,7 @@
 			{#if validating}
 				<Spinner color="dark" />
 			{:else}
-				Check Solution
+				Check solution
 			{/if}
 		</Button>
 		<Dropdown options={styleOptions}>Style</Dropdown>
@@ -250,18 +250,33 @@
 		box-shadow: var(--move-y-rem) var(--move-x-rem) var(--blue);
 	}
 
+	.correct-message {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-evenly;
+		align-items: center;
+
+		height: 100%;
+		width: 100%;
+	}
+
 	.correct-message-header {
+		text-align: center;
 		font-family: 'Spicy Rice', Impact;
 		font-size: 5rem;
+
 		margin: 0;
+		padding: 0;
 	}
 
 	.correct-message-body {
 		display: flex;
 		flex-direction: column;
-		justify-content: start;
+		justify-content: center;
 		align-items: center;
 		gap: 1rem;
+
+		width: 100%;
 	}
 
 	.buttons-container {

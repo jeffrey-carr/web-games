@@ -12,7 +12,7 @@
 	} = $props();
 </script>
 
-<button class={`button ${size}`} {onclick}>
+<button class={`button ${size}`} {onclick} {disabled}>
 	{@render children?.()}
 </button>
 
@@ -43,8 +43,11 @@
 	}
 
 	.button:disabled {
-		background-color: var(--gray);
-		color: var(--dark);
+		background-color: gray;
+		color: darkslategray;
+	}
+	.button:disabled:hover {
+		cursor: default;
 	}
 
 	.button.small {

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { BoardStyle, Coordinate, InvalidHint } from '$lib/types';
+	import { Stack } from '$lib/utils';
+	import Button from './Button.svelte';
 	import Cell from './Cell.svelte';
 
 	let {
@@ -14,24 +16,19 @@
 		lockedCells: Coordinate[];
 	} = $props();
 
-	const getPosition = (rowIndex: number, colIndex: number): string => {
-		const top = rowIndex === 0;
-		const bottom = rowIndex === board.length - 1;
-		const left = colIndex === 0;
-		const right = colIndex === board.length - 1;
+	type Move = {
+		row: number;
+		col: number;
+		value: number;
+	};
+	let moveStack = $state(new Stack<Move>());
+	let noMoves = $state(true);
 
-		switch (true) {
-			case top && left:
-				return 'top-left';
-			case top && right:
-				return 'top-right';
-			case bottom && left:
-				return 'bottom-left';
-			case bottom && right:
-				return 'bottom-right';
-		}
-
-		return '';
+	const fillCell = (row: number, col: number, value: number) => {
+		const previousValue = board[row][col];
+		moveStack.push({ row, col, value: previousValue });
+		noMoves = false;
+		board[row][col] = value;
 	};
 
 	const isLocked = (row: number, col: number): boolean => {
@@ -49,15 +46,33 @@
 
 		return false;
 	};
+
+	const undoMove = () => {
+		if (moveStack.size() === 0) {
+			return;
+		}
+
+		const lastMove = moveStack.pop();
+		if (lastMove == null) {
+			return;
+		}
+
+		if (moveStack.size() === 0) {
+			noMoves = true;
+		}
+
+		board[lastMove.row][lastMove.col] = lastMove.value;
+	};
 </script>
 
 <div class="container" style={`--size: ${board.length}`}>
 	{#each board as row, rowI}
 		{#each row as cell, colI}
 			<Cell
-				bind:value={board[rowI][colI]}
+				value={board[rowI][colI]}
+				updateValue={fillCell}
+				coord={{ row: rowI, col: colI }}
 				locked={isLocked(rowI, colI)}
-				position={getPosition(rowI, colI)}
 				zeroColor={style === 'numbers' ? 'var(--gray)' : undefined}
 				oneColor={style === 'numbers' ? 'var(--gray)' : undefined}
 				isHint={isHintCell(rowI, colI)}
@@ -68,6 +83,9 @@
 			</Cell>
 		{/each}
 	{/each}
+</div>
+<div class="buttons-container">
+	<Button onclick={undoMove} disabled={noMoves}>Undo last move</Button>
 </div>
 
 <style>
@@ -80,6 +98,10 @@
 
 		height: var(--container-size);
 		width: var(--container-size);
+	}
+
+	.buttons-container {
+		margin-bottom: 1rem;
 	}
 
 	@media only screen and (max-width: 600px) {

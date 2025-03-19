@@ -1,8 +1,9 @@
 <script lang="ts">
 	import lock from '$lib/assets/lock.svg';
+	import type { Coordinate } from '$lib/types';
 
-	const buildClassStr = (value: number, position?: string, isHint?: boolean): string => {
-		let str = position ?? '';
+	const buildClassStr = (value: number, isHint?: boolean): string => {
+		let str = '';
 
 		if (value >= 0) {
 			str = `${str} ${value === 0 ? 'zero' : 'one'}`;
@@ -15,32 +16,58 @@
 		return str.trim();
 	};
 
+	// const getPosition = (rowIndex: number, colIndex: number): string => {
+	// 	const top = rowIndex === 0;
+	// 	const bottom = rowIndex === board.length - 1;
+	// 	const left = colIndex === 0;
+	// 	const right = colIndex === board.length - 1;
+
+	// 	switch (true) {
+	// 		case top && left:
+	// 			return 'top-left';
+	// 		case top && right:
+	// 			return 'top-right';
+	// 		case bottom && left:
+	// 			return 'bottom-left';
+	// 		case bottom && right:
+	// 			return 'bottom-right';
+	// 	}
+
+	// 	return '';
+	// };
+
 	let {
 		value = $bindable(),
+		updateValue,
+		coord,
 		isHint = false,
 		locked = false,
-		position = '',
 		zeroColor,
 		oneColor,
 		children
 	}: {
 		value: number;
+		updateValue: (row: number, col: number, v: number) => void;
+		coord: Coordinate;
 		isHint?: boolean;
 		zeroColor?: string;
 		oneColor?: string;
 		locked?: boolean;
-		position?: string;
 		children?: () => any;
 	} = $props();
 
-	let containerClassStr = $derived(buildClassStr(value, position, isHint));
+	// let position = $derived(getPosition(coord.row, coord.col));
+	let containerClassStr = $derived(buildClassStr(value, isHint));
 
 	const change = () => {
+		let newValue: number;
 		if (value === 1) {
-			value = -1;
+			newValue = -1;
 		} else {
-			value++;
+			newValue = value + 1;
 		}
+
+		updateValue(coord.row, coord.col, newValue);
 	};
 </script>
 

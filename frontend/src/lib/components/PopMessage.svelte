@@ -107,8 +107,7 @@
 	}
 
 	.message-container {
-		--tilt: 15deg;
-		--height-rem: max(50%, 19rem);
+		--height-rem: 60%;
 		position: relative;
 		z-index: 6;
 
@@ -116,8 +115,9 @@
 		justify-content: center;
 		align-items: flex-start;
 
-		height: var(--height-rem);
 		width: 70%;
+
+		padding: 2rem;
 
 		color: var(--dark);
 		background-color: var(--light);
@@ -127,7 +127,7 @@
 
 		overflow: hidden;
 
-		animation: popIn 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+		animation: popIn 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 	}
 
 	@keyframes popIn {
