@@ -1,9 +1,11 @@
 html {
-  --red: #F06449;
-  --blue: #5BC3EB;
+  --red: #FB8500;
+  --blue: #219EBC;
+  --warning: red;
   --light: #EDE6E3;
   --gray: #DADAD9;
   --dark: #36382E;
+  --special-font-family: "Doto", Helvetica, serif;
   --font-family: "Dosis", serif;
   
   font-family: var(--font-family);
@@ -13,12 +15,15 @@ body {
   color: white;
   background-color: #0d1117;
   
+  height: 100vh;
+  width: 100vw;
+  
   margin: 0;
   padding: 0;
 }
 
 h1 {
-  font-family: "Doto";
+  font-family: var(--special-font-family);
 }
 
 button {
@@ -30,4 +35,8 @@ button:hover {
 
 div {
   position: relative;
+}
+
+p {
+  font-size: 1.3rem;
 }

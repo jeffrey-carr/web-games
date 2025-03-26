@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { generateRandomInt, generateRandomNumber, getRandomHexColor } from '$lib';
 
-	let { children }: { children?: () => any } = $props();
 	let canvas = $state<HTMLCanvasElement | null>(null);
 	let ctx = $derived(canvas?.getContext('2d'));
 
@@ -77,9 +76,6 @@
 
 <div class="container">
 	<canvas class="canvas" bind:this={canvas}></canvas>
-	<div class="message-container">
-		{@render children?.()}
-	</div>
 </div>
 
 <style>
@@ -104,38 +100,5 @@
 
 		height: 100vh;
 		width: 100vw;
-	}
-
-	.message-container {
-		--height-rem: 60%;
-		position: relative;
-		z-index: 6;
-
-		display: flex;
-		justify-content: center;
-		align-items: flex-start;
-
-		width: 70%;
-
-		padding: 2rem;
-
-		color: var(--dark);
-		background-color: var(--light);
-
-		border: 1px solid var(--dark);
-		border-radius: 15px;
-
-		overflow: hidden;
-
-		animation: popIn 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-	}
-
-	@keyframes popIn {
-		from {
-			transform: translateY(calc(-1 * (var(--height-rem) + 60vh)));
-		}
-		to {
-			transform: translateY(0);
-		}
 	}
 </style>

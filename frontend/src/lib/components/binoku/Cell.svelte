@@ -16,26 +16,6 @@
 		return str.trim();
 	};
 
-	// const getPosition = (rowIndex: number, colIndex: number): string => {
-	// 	const top = rowIndex === 0;
-	// 	const bottom = rowIndex === board.length - 1;
-	// 	const left = colIndex === 0;
-	// 	const right = colIndex === board.length - 1;
-
-	// 	switch (true) {
-	// 		case top && left:
-	// 			return 'top-left';
-	// 		case top && right:
-	// 			return 'top-right';
-	// 		case bottom && left:
-	// 			return 'bottom-left';
-	// 		case bottom && right:
-	// 			return 'bottom-right';
-	// 	}
-
-	// 	return '';
-	// };
-
 	let {
 		value = $bindable(),
 		updateValue,
@@ -56,7 +36,6 @@
 		children?: () => any;
 	} = $props();
 
-	// let position = $derived(getPosition(coord.row, coord.col));
 	let containerClassStr = $derived(buildClassStr(value, isHint));
 
 	const change = () => {
@@ -90,6 +69,7 @@
 		--zeroColor: --blue;
 		--oneColor: --red;
 
+		box-sizing: border-box;
 		position: relative;
 
 		border: 1px solid var(--dark);
@@ -98,9 +78,9 @@
 		height: 100%;
 		width: 100%;
 
-		transition:
-			background-color var(--animate-ms) linear,
-			border-color var(--animate-ms) linear;
+		aspect-ratio: 1 / 1;
+
+		transition: background-color var(--animate-ms) linear;
 	}
 	.container.top-left {
 		border-top-left-radius: var(--border-radius-px);
@@ -127,7 +107,7 @@
 	}
 
 	.hint {
-		border: 2px solid var(--red);
+		border: 3px solid var(--warning);
 	}
 
 	.button {
@@ -156,5 +136,11 @@
 
 		height: var(--size);
 		width: var(--size);
+	}
+
+	@keyframes pulse {
+		to {
+			border-width: 4px;
+		}
 	}
 </style>

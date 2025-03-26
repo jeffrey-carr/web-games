@@ -1,21 +1,13 @@
 <script lang="ts">
-	import { Board, Button, Dropdown, Spinner } from '$lib/components';
-	import PopMessage from '$lib/components/PopMessage.svelte';
-	import type { InvalidHint, BoardStyle, Coordinate, DropdownOption } from '$lib/types';
 	import { PUBLIC_BACKEND_URL } from '$env/static/public';
+	import { Board, HowToPlay } from '$lib/components/binoku';
+	import { Button, Modal, Confetti, Spinner } from '$lib/components/common';
+	import type { InvalidHint, Coordinate } from '$lib/types';
 
-	const DEFAULT_SIZE = 6;
-	const SIZES = [4, 6, 8];
-
-	let size = $state(DEFAULT_SIZE);
-	let err = $state<string | null>(null);
-
-	let board = $state<number[][]>([]);
-	let lockedCells = $state<Coordinate[]>([]);
-
+	// Hints
 	const HINT_DURATION_MS = 3500;
 	let hint = $state<InvalidHint>();
-	let hintTimer = $state<number | undefined>();
+	let hintTimer = $state<number>();
 	const setHint = (newHint: InvalidHint) => {
 		clearTimeout(hintTimer);
 		hint = newHint;
@@ -24,15 +16,12 @@
 		}, HINT_DURATION_MS);
 	};
 
-	let showCorrect = $state(false);
+	// Board
+	const SIZES = [4, 6, 8] as const;
+	type BoardSize = (typeof SIZES)[number];
+	let board = $state<number[][]>([]);
+	let lockedCells = $state<Coordinate[]>([]);
 
-	let style = $state<BoardStyle>('colors');
-
-	// 0 - Not generating
-	// 1 - Generating
-	// 2 - Generating (long)
-	// 3 - Generation (very long)
-	// 4 - Generation (very very long)
 	let generatingLevel = $state(0);
 	let generating = $derived(generatingLevel > 0);
 	const GENERATING_MESSAGES = [
@@ -45,30 +34,12 @@
 
 	let validating = $state(false);
 
-	const styleOptions: DropdownOption[] = [
-		{
-			label: 'Numbers',
-			onclick: () => {
-				style = 'numbers';
-			}
-		},
-		{
-			label: 'Colors',
-			onclick: () => {
-				style = 'colors';
-			}
-		}
-	];
-
-	const getBoard = async () => {
-		if (err != null) {
-			return;
-		}
-
+	// Board
+	const generateBoard = async (size: BoardSize) => {
 		board = [];
+		showCorrect = false;
 
 		let generatingTimeout: number | undefined;
-
 		generatingLevel = 1;
 		generatingTimeout = setInterval(() => {
 			generatingLevel = Math.min(GENERATING_MESSAGES.length, generatingLevel + 1);
@@ -96,7 +67,7 @@
 		return coords;
 	};
 
-	const checkSolution = async (): Promise<boolean> => {
+	const checkSolution = async () => {
 		validating = true;
 		const validateRequest = await fetch(`${PUBLIC_BACKEND_URL}/validate-game`, {
 			method: 'POST',
@@ -114,117 +85,172 @@
 		return true;
 	};
 
-	const newGame = () => {
-		showCorrect = false;
-		getBoard();
+	// Modal
+	let showInstructions = $state(false);
+	const toggleModal = () => {
+		showInstructions = !showInstructions;
 	};
+
+	// Correct celebration
+	let showCorrect = $state(false);
 </script>
 
 <div class="container">
-	{#snippet sizeButton(n: number)}
-		<button class={`size-button ${n === size ? 'selected' : ''}`} onclick={() => (size = n)}>
+	{#snippet sizeButton(n: BoardSize)}
+		<button class="size-button" onclick={() => generateBoard(n)}>
 			{n}
 		</button>
 	{/snippet}
+	<Modal bind:open={showInstructions}>
+		<HowToPlay />
+	</Modal>
+	<Modal bind:open={showCorrect}>
+		<div class="correct-message">
+			<h1>Correct!</h1>
+			<!-- <p>You completed a {board.length}x{board.length} puzzle in {0}</p> -->
+			<p>Would you like to play again?</p>
+			<div class="buttons-container">
+				{#each SIZES as size}
+					{@render sizeButton(size)}
+				{/each}
+			</div>
+			<Button
+				onclick={() => {
+					showCorrect = false;
+				}}>View board</Button
+			>
+		</div>
+	</Modal>
+	{#if showCorrect}
+		<Confetti />
+	{/if}
 
-	<h1 class="title">Binoku</h1>
-	<div class="button-container">
-		<Button size="medium" onclick={getBoard}>Generate puzzle</Button>
-		<Button size="medium" onclick={checkSolution} disabled={validating}>
+	<!-- Header -->
+	<div class="header">
+		<h1 class="title">Binoku</h1>
+	</div>
+
+	<!-- Buttons -->
+	<div class="buttons-container">
+		<div class="new-game-container">
+			<div class="title">
+				<p>Start a new game</p>
+			</div>
+			<div class="buttons">
+				{#each SIZES as size}
+					{@render sizeButton(size)}
+				{/each}
+			</div>
+		</div>
+		<Button size="medium" onclick={checkSolution} disabled={board.length === 0}>
 			{#if validating}
 				<Spinner color="dark" />
 			{:else}
-				Check solution
+				Check Solution
 			{/if}
 		</Button>
-		<Dropdown options={styleOptions}>Style</Dropdown>
+		<Button size="medium" onclick={toggleModal}>How To Play</Button>
 	</div>
-	<div class="buttons-container">
-		{#each SIZES as size}
-			{@render sizeButton(size)}
-		{/each}
-	</div>
-	{#if generating}
-		<div class="spinner-container">
-			<Spinner />
-		</div>
-		{#each { length: generatingLevel } as _, i}
-			<p class="loading-message">{GENERATING_MESSAGES[i]}</p>
-		{/each}
-	{:else if board.length > 0}
-		<Board bind:board {lockedCells} {style} {hint} />
 
-		{#if showCorrect}
-			<PopMessage>
-				<div class="correct-message">
-					<h1 class="correct-message-header">Correct!</h1>
-					<div class="correct-message-body">
-						<p>You completed a {board.length}x{board.length} puzzle in {0}</p>
-						<div class="buttons-container">
-							{#each SIZES as size}
-								{@render sizeButton(size)}
-							{/each}
-						</div>
-						<div class="buttons-container">
-							<Button onclick={newGame}>New Game</Button>
-							<Button
-								onclick={() => {
-									showCorrect = false;
-								}}>View board</Button
-							>
-						</div>
-					</div>
-				</div>
-			</PopMessage>
+	<!-- Board -->
+	<div class="board-container">
+		{#if generating}
+			<div class="spinner-container">
+				<Spinner />
+			</div>
+		{:else if board.length > 0}
+			<Board bind:board {lockedCells} {hint} />
 		{/if}
-	{/if}
+	</div>
 </div>
 
 <style>
 	.container {
 		display: flex;
 		flex-direction: column;
-		justify-content: start;
 		align-items: center;
-		gap: 2rem;
+		justify-content: flex-start;
+		gap: 1.3rem;
+
+		box-sizing: border-box;
 
 		height: 100vh;
 		width: 100vw;
+
+		margin: 0;
+		padding: 1rem 0;
 	}
 
-	.spinner-container {
+	/* Header area */
+	.header {
+		flex: 0;
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	.header .title {
+		font-size: 5rem;
+
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Buttons area */
+	.buttons-container {
+		flex: 0;
+
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.new-game-container {
+		--button-size: 3rem;
+		--title-size: 1rem;
+	}
+	.new-game-container .title {
+		position: absolute;
+		top: calc(-1 * (var(--button-size) + var(--title-size) - 1rem));
+
+		width: 100%;
+
+		text-align: center;
+		font-size: var(--title-size);
+	}
+	.new-game-container .buttons {
+		display: flex;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+
+	/* Board area */
+	.board-container {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+
+		height: 90%;
+		width: 90%;
+	}
+	.board-container .spinner-container {
 		--size-rem: 2.5rem;
 		height: var(--size-rem);
 		width: var(--size-rem);
 	}
 
-	.loading-message {
-		margin: 0;
-		padding: 0;
-
-		animation: slide-in 200ms ease-out;
-	}
-
-	.title {
-		margin-top: 0;
-		margin-bottom: 0;
-		font-size: 5rem;
-	}
-
-	.button-container {
-		display: flex;
-		justify-content: center;
-		gap: 1rem;
-
-		width: 100%;
-	}
-
+	/* Other */
 	.size-button {
+		--button-size: 3rem;
 		--transition-ms: 200ms;
+		--move-x-rem: 0.1rem;
+		--move-y-rem: calc(var(--move-x-rem) * -1);
 
 		background-color: var(--light);
-		height: 3rem;
-		width: 3rem;
+		height: var(--button-size);
+		width: var(--button-size);
 
 		border: 1px solid var(--dark);
 		border-radius: 5px;
@@ -236,62 +262,33 @@
 			transform var(--transition-ms) linear,
 			box-shadow var(--transition-ms) linear;
 	}
-
-	.size-button.selected {
-		--move-x-rem: 0.1rem;
-		--move-y-rem: calc(var(--move-x-rem) * -1);
+	.size-button:hover {
 		background-color: var(--gray);
 		transform: translate(var(--move-x-rem), var(--move-y-rem));
 	}
-	.size-button.selected:nth-child(odd) {
+	.size-button:hover:nth-child(odd) {
 		box-shadow: var(--move-y-rem) var(--move-x-rem) var(--red);
 	}
-	.size-button.selected:nth-child(even) {
+	.size-button:hover:nth-child(even) {
 		box-shadow: var(--move-y-rem) var(--move-x-rem) var(--blue);
+	}
+	.size-button:active {
+		--transition-ms: 120ms;
+		transform: translate(0, 0);
+		box-shadow: none !important;
 	}
 
 	.correct-message {
-		display: flex;
+		display: inline-flex;
 		flex-direction: column;
-		justify-content: space-evenly;
-		align-items: center;
-
-		height: 100%;
-		width: 100%;
-	}
-
-	.correct-message-header {
-		text-align: center;
-		font-family: 'Spicy Rice', Impact;
-		font-size: 5rem;
-
-		margin: 0;
-		padding: 0;
-	}
-
-	.correct-message-body {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
 		align-items: center;
 		gap: 1rem;
 
-		width: 100%;
+		height: 60vh;
+		width: 85vw;
 	}
 
-	.buttons-container {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	@keyframes slide-in {
-		from {
-			opacity: 0;
-			transform: translateY(-1rem);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+	.correct-message h1 {
+		margin-bottom: 0;
 	}
 </style>
