@@ -1,16 +1,11 @@
-package entities
+package binoku
 
 // GamePiece represents a valid game piece
 type GamePiece int
 
 const (
-	// Zero represents a game piece of 0
-	Zero GamePiece = 0
-	// One represents a game piece of 1
-	One GamePiece = 1
 	// Empty represents an empty space on the game board
 	Empty GamePiece = -1
-
 	// EasyDifficulty is the percentage of empty spaces at the start of a game
 	EasyDifficulty = 0.45
 	// MediumDifficulty is the percentage of empty spaces at the start of a game
@@ -21,7 +16,7 @@ const (
 
 // Game represents a game object
 type Game struct {
-	Board [][]int `json:"board"`
+	Board [][]GamePiece `json:"board"`
 }
 
 // Coordinate represents a space on the board
@@ -34,4 +29,15 @@ type Coordinate struct {
 type InvalidBoardHint struct {
 	Rows []int `json:"rows"`
 	Cols []int `json:"cols"`
+}
+
+// ValidateGameRequest is the requests to validate a completed board
+type ValidateGameRequest struct {
+	Board [][]GamePiece `json:"board"`
+}
+
+// ValidateGameResponse is the resonse to validate a completed board
+type ValidateGameResponse struct {
+	Valid bool             `json:"valid"`
+	Hint  InvalidBoardHint `json:"hint,omitempty"`
 }

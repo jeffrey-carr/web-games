@@ -8,13 +8,7 @@ import (
 // Any returns true if any elements in slice return true in the
 // provided function
 func Any[T any](slice []T, f func(x T) bool) bool {
-	for _, x := range slice {
-		if f(x) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(slice, f)
 }
 
 // ShuffleSlice takes in a slice and returns the
@@ -37,11 +31,11 @@ func SumSlice(slice []int) int {
 	return total
 }
 
-// DuplicateBoard creates a deep copy of the provided game board
-func DuplicateBoard(board [][]int) [][]int {
-	var dupe [][]int
-	for _, row := range board {
-		dupeRow := make([]int, len(row))
+// DuplicateMatrix creates a deep copy of the provided game board
+func DuplicateMatrix[T any](matrix [][]T) [][]T {
+	var dupe [][]T
+	for _, row := range matrix {
+		dupeRow := make([]T, len(row))
 		copy(dupeRow, row)
 		dupe = append(dupe, dupeRow)
 	}
@@ -49,24 +43,9 @@ func DuplicateBoard(board [][]int) [][]int {
 	return dupe
 }
 
-// IsEqualSlices confirms if two slices have the same elements
-// in the same order
-func IsEqualSlices(a []int, b []int) bool {
-	incompleteA := Any(a, func(i int) bool {
-		return i == -1
-	})
-	incompleteB := Any(b, func(i int) bool {
-		return i == -1
-	})
-	if incompleteA || incompleteB {
-		return false
-	}
-	return slices.Equal(a, b)
-}
-
 // TransposeMatrix rotates the matrix 90 degrees clockwise
-func TransposeMatrix(matrix [][]int) [][]int {
-	transposed := DuplicateBoard(matrix)
+func TransposeMatrix[T any](matrix [][]T) [][]T {
+	transposed := DuplicateMatrix(matrix)
 	n := len(transposed)
 	// Handle the empty matrix case.
 	if n == 0 {

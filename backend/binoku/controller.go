@@ -1,16 +1,14 @@
-package controllers
+package binoku
 
 import (
-	"binoku/entities"
 	"binoku/utils"
-	"fmt"
 	"slices"
 )
 
 // GameManager represents a game manager
 type GameManager interface {
-	GenerateBoard(int) (entities.Game, error)
-	ValidateBoard(board [][]int) (bool, entities.InvalidBoardHint)
+	GenerateBoard(int) (Game, error)
+	ValidateBoard(board [][]GamePiece) (bool, InvalidBoardHint)
 }
 
 type gameManager struct{}
@@ -20,17 +18,17 @@ func NewGameManager() GameManager {
 	return &gameManager{}
 }
 
-func (gm gameManager) GenerateBoard(size int) (entities.Game, error) {
+func (gm gameManager) GenerateBoard(size int) (Game, error) {
 	board := generateGameBoard(size)
 
-	return entities.Game{Board: board}, nil
+	return Game{Board: board}, nil
 }
 
-func (gm gameManager) ValidateBoard(board [][]int) (bool, entities.InvalidBoardHint) {
+func (gm gameManager) ValidateBoard(board [][]GamePiece) (bool, InvalidBoardHint) {
 	// Confirm there are no empty spaces
 	for i, row := range board {
-		if slices.Contains(row, -1) {
-			return false, entities.InvalidBoardHint{
+		if slices.Contains(row, Empty) {
+			return false, InvalidBoardHint{
 				Rows: []int{i},
 			}
 		}
@@ -40,40 +38,29 @@ func (gm gameManager) ValidateBoard(board [][]int) (bool, entities.InvalidBoardH
 }
 
 // Generate a fully valid board
-func generateGameBoard(n int) [][]int {
-	var board [][]int
-	// Fill board with -1
+func generateGameBoard(n int) [][]GamePiece {
+	var board [][]GamePiece
+	// Fill board with Empty spaces
 	for range n {
-		row := make([]int, n)
+		row := make([]GamePiece, n)
 		for i := range row {
-			row[i] = -1
+			row[i] = Empty
 		}
 		board = append(board, row)
 	}
 
 	backtrackFill(board, 0, 0)
-
-	fmt.Println("Generated board:")
-	for _, row := range board {
-		for _, value := range row {
-			fmt.Printf("%d ", value)
-		}
-
-		fmt.Printf("(%d)", utils.SumSlice(row))
-		fmt.Println()
-	}
-
 	return backtrackSolve(board)
 }
 
-func backtrackFill(board [][]int, row int, col int) bool {
+func backtrackFill(board [][]GamePiece, row int, col int) bool {
 	n := len(board)
 	if row == n {
 		return true
 	}
 
 	// Randomly pick a 0 or 1
-	options := []int{0, 1}
+	options := []GamePiece{0, 1}
 	options = utils.ShuffleSlice(options)
 
 	nextCol := col + 1
@@ -90,7 +77,7 @@ func backtrackFill(board [][]int, row int, col int) bool {
 				return true
 			}
 			// It didn't work, undo move
-			board[row][col] = -1
+			board[row][col] = Empty
 		}
 	}
 
@@ -98,7 +85,7 @@ func backtrackFill(board [][]int, row int, col int) bool {
 }
 
 // boardIsValid validates that a board is correct. Returns the
-func boardIsValid(board [][]int) (bool, entities.InvalidBoardHint) {
+func boardIsValid(board [][]GamePiece) (bool, InvalidBoardHint) {
 	// The game has 3 rules:
 	// 1. There must be an equal number of 1's and 0's in each row/column
 	// 2. There cannot be more than 2 consecutive values next to each other in each row/column
@@ -106,19 +93,19 @@ func boardIsValid(board [][]int) (bool, entities.InvalidBoardHint) {
 	for rowIndex, row := range board {
 		isRuleOneValid := validateRuleOne(row)
 		if !isRuleOneValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Rows: []int{rowIndex},
 			}
 		}
 		isRuleTwoValid := validateRuleTwo(row)
 		if !isRuleTwoValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Rows: []int{rowIndex},
 			}
 		}
 		isRuleThreeValid, offendingRowIndex := validateRuleThree(rowIndex, board)
 		if !isRuleThreeValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Rows: []int{rowIndex, offendingRowIndex},
 			}
 		}
@@ -129,39 +116,29 @@ func boardIsValid(board [][]int) (bool, entities.InvalidBoardHint) {
 	for colIndex, col := range transposed {
 		isRuleOneValid := validateRuleOne(col)
 		if !isRuleOneValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Cols: []int{colIndex},
 			}
 		}
 		isRuleTwoValid := validateRuleTwo(col)
 		if !isRuleTwoValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Cols: []int{colIndex},
 			}
 		}
 		isRuleThreeValid, offendingColIndex := validateRuleThree(colIndex, transposed)
 		if !isRuleThreeValid {
-			return false, entities.InvalidBoardHint{
+			return false, InvalidBoardHint{
 				Rows: []int{colIndex, offendingColIndex},
 			}
 		}
 	}
 
-	return true, entities.InvalidBoardHint{}
-
-	// for n := range board {
-	// 	rIsValid := rowIsValid(utils.DuplicateBoard(board), n)
-	// 	cIsValid := colIsValid(utils.DuplicateBoard(board), n)
-
-	// 	if !rIsValid || !cIsValid {
-	// 		return false
-	// 	}
-	// }
-	// return true
+	return true, InvalidBoardHint{}
 }
 
 // 1. There must be an equal number of 1's and 0's in each row/column
-func validateRuleOne(row []int) bool {
+func validateRuleOne(row []GamePiece) bool {
 	size := len(row)
 	rowZeros, rowOnes := 0, 0
 	for _, value := range row {
@@ -182,7 +159,7 @@ func validateRuleOne(row []int) bool {
 }
 
 // 2. There cannot be more than 2 consecutive values next to each other in each row/column
-func validateRuleTwo(row []int) bool {
+func validateRuleTwo(row []GamePiece) bool {
 	// Rule 2
 	for i, value := range row {
 		if i < 2 {
@@ -204,7 +181,7 @@ func validateRuleTwo(row []int) bool {
 // 3. There cannot be any identical rows or any identical columns
 // Returns whether the rule is valid. If not, provides the index of
 // the first matched column
-func validateRuleThree(rowIndex int, board [][]int) (bool, int) {
+func validateRuleThree(rowIndex int, board [][]GamePiece) (bool, int) {
 	if rowIndex < 0 || rowIndex > len(board) {
 		return false, -1
 	}
@@ -215,8 +192,8 @@ func validateRuleThree(rowIndex int, board [][]int) (bool, int) {
 			continue
 		}
 
-		if slices.EqualFunc(row, innerRow, func(item int, innerItem int) bool {
-			if item < 0 || innerItem < 0 {
+		if slices.EqualFunc(row, innerRow, func(item GamePiece, innerItem GamePiece) bool {
+			if item == Empty || innerItem == Empty {
 				return false
 			}
 
@@ -229,15 +206,15 @@ func validateRuleThree(rowIndex int, board [][]int) (bool, int) {
 	return true, -1
 }
 
-func valueIsValid(toValidate [][]int, row int, col int, value int) bool {
-	board := utils.DuplicateBoard(toValidate)
+func valueIsValid(toValidate [][]GamePiece, row int, col int, value GamePiece) bool {
+	board := utils.DuplicateMatrix(toValidate)
 	board[row][col] = value
 
 	isValid, _ := boardIsValid(board)
 	return isValid
 }
 
-func backtrackSolve(board [][]int) [][]int {
+func backtrackSolve(board [][]GamePiece) [][]GamePiece {
 	n := len(board)
 	// To convert a board into a puzzle:
 	// Step 1: Remove a number
@@ -246,10 +223,10 @@ func backtrackSolve(board [][]int) [][]int {
 	// To minimize going down bad routes and for a better user experience,
 	// we will attempt to take an equal amount from each quadrant, so we
 	// will visit the quadrants in a round-robin fashion
-	var topLeft, topRight, bottomLeft, bottomRight []entities.Coordinate
+	var topLeft, topRight, bottomLeft, bottomRight []Coordinate
 	for row := range n {
 		for col := range n {
-			coord := entities.Coordinate{Col: col, Row: row}
+			coord := Coordinate{Col: col, Row: row}
 
 			top := row < n/2
 			left := col < n/2
@@ -274,9 +251,9 @@ func backtrackSolve(board [][]int) [][]int {
 	topRight = utils.ShuffleSlice(topRight)
 	bottomRight = utils.ShuffleSlice(bottomRight)
 	// Now merge them into a new copy
-	coords := []entities.Coordinate{}
+	coords := []Coordinate{}
 	for i := range n * n {
-		var coord entities.Coordinate
+		var coord Coordinate
 		if i%4 == 0 && len(topLeft) > 0 {
 			coord = topLeft[0]
 			topLeft = topLeft[1:]
@@ -294,7 +271,7 @@ func backtrackSolve(board [][]int) [][]int {
 		coords = append(coords, coord)
 	}
 
-	emptySpaces := []entities.Coordinate{}
+	emptySpaces := []Coordinate{}
 
 	// We can start by removing the first space, since there is nothing to solve
 	coord := coords[0]
@@ -318,7 +295,7 @@ func backtrackSolve(board [][]int) [][]int {
 				value := removedValues[i]
 
 				board[coord.Row][coord.Col] = value
-				emptySpaces = slices.DeleteFunc(emptySpaces, func(emptyCoord entities.Coordinate) bool {
+				emptySpaces = slices.DeleteFunc(emptySpaces, func(emptyCoord Coordinate) bool {
 					return emptyCoord.Col == coord.Col && emptyCoord.Row == coord.Row
 				})
 
@@ -337,34 +314,34 @@ func backtrackSolve(board [][]int) [][]int {
 	return board
 }
 
-func removeCoords(board [][]int, coords []entities.Coordinate, n int) ([]int, []entities.Coordinate) {
+func removeCoords(board [][]GamePiece, coords []Coordinate, n int) ([]GamePiece, []Coordinate) {
 	if n > len(coords) {
 		return nil, nil
 	}
 
-	removedValues := []int{}
-	removedCoords := []entities.Coordinate{}
+	removedValues := []GamePiece{}
+	removedCoords := []Coordinate{}
 
 	for i := range n {
 		coord := coords[i]
 		removedCoords = append(removedCoords, coord)
 
 		value := board[coord.Row][coord.Col]
-		board[coord.Row][coord.Col] = -1
+		board[coord.Row][coord.Col] = Empty
 		removedValues = append(removedValues, value)
 	}
 
 	return removedValues, removedCoords
 }
 
-func isUniquelySolvable(board [][]int, emptySpaces []entities.Coordinate) bool {
+func isUniquelySolvable(board [][]GamePiece, emptySpaces []Coordinate) bool {
 	count := 0
 	countSolutions(board, emptySpaces, &count)
 	return count == 1
 }
 
 // Solves a board and returns if it was successful
-func countSolutions(board [][]int, emptySpaces []entities.Coordinate, count *int) {
+func countSolutions(board [][]GamePiece, emptySpaces []Coordinate, count *int) {
 	// Base case
 	if len(emptySpaces) == 0 {
 		*count++
@@ -378,12 +355,12 @@ func countSolutions(board [][]int, emptySpaces []entities.Coordinate, count *int
 	coord, emptySpaces := emptySpaces[0], emptySpaces[1:]
 
 	if valueIsValid(board, coord.Row, coord.Col, 0) {
-		bCpy := utils.DuplicateBoard(board)
+		bCpy := utils.DuplicateMatrix(board)
 		bCpy[coord.Row][coord.Col] = 0
 		countSolutions(bCpy, emptySpaces, count)
 	}
 	if valueIsValid(board, coord.Row, coord.Col, 1) {
-		bCpy := utils.DuplicateBoard(board)
+		bCpy := utils.DuplicateMatrix(board)
 		bCpy[coord.Row][coord.Col] = 1
 		countSolutions(bCpy, emptySpaces, count)
 	}

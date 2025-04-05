@@ -45,7 +45,7 @@
 			generatingLevel = Math.min(GENERATING_MESSAGES.length, generatingLevel + 1);
 		}, 10000);
 
-		const boardRequest = await fetch(`${PUBLIC_BACKEND_URL}/new-game?size=${size}`);
+		const boardRequest = await fetch(`${PUBLIC_BACKEND_URL}/binoku/new-game?size=${size}`);
 		const data = await boardRequest.json();
 		board = data['board'];
 		lockedCells = getLockedCells(board);
@@ -69,7 +69,7 @@
 
 	const checkSolution = async () => {
 		validating = true;
-		const validateRequest = await fetch(`${PUBLIC_BACKEND_URL}/validate-game`, {
+		const validateRequest = await fetch(`${PUBLIC_BACKEND_URL}/binoku/validate-game`, {
 			method: 'POST',
 			body: JSON.stringify({ board })
 		});
