@@ -43,7 +43,7 @@
 		generatingLevel = 1;
 		generatingTimeout = setInterval(() => {
 			generatingLevel = Math.min(GENERATING_MESSAGES.length, generatingLevel + 1);
-		}, 10000);
+		}, 5000);
 
 		const boardRequest = await fetch(`${PUBLIC_BACKEND_URL}/binoku/new-game?size=${size}`);
 		const data = await boardRequest.json();
@@ -155,8 +155,15 @@
 	<!-- Board -->
 	<div class="board-container">
 		{#if generating}
-			<div class="spinner-container">
-				<Spinner />
+			<div class="loading-container">
+				<div class="spinner-container">
+					<Spinner />
+				</div>
+				<div class="loading-text">
+					{#each { length: generatingLevel } as _, i}
+						<p class="message">{GENERATING_MESSAGES[i]}</p>
+					{/each}
+				</div>
 			</div>
 		{:else if board.length > 0}
 			<Board bind:board {lockedCells} {hint} />
@@ -241,6 +248,28 @@
 		width: var(--size-rem);
 	}
 
+	.loading-container {
+		--spacing: 1rem;
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing);
+
+		width: 100%;
+
+		margin-top: var(--spacing);
+	}
+	.loading-text {
+		width: 100%;
+	}
+	.loading-text .message {
+		animation: upAndIn 250ms ease-out forwards;
+
+		text-align: center;
+		font-size: 1rem;
+	}
+
 	/* Other */
 	.size-button {
 		--button-size: 3rem;
@@ -290,5 +319,16 @@
 
 	.correct-message h1 {
 		margin-bottom: 0;
+	}
+
+	@keyframes upAndIn {
+		from {
+			transform: translateY(-1rem);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
 	}
 </style>
