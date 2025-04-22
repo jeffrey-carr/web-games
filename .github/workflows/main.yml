@@ -25,6 +25,14 @@ jobs:
       - name: Copy config files
         working-directory: backend
         run: cp config.prod.yaml ../build/
+      
+      - name: Include static data files - Make folders
+        working-directory: backend
+        run: mkdir ../build/data
+      
+      - name: Include static data files - WordChain dictionary
+        working-directory: backend
+        run: cp data/word_chain_dictionary.json ../build/data
 
       - name: Zip build
         run: tar -cvf ${{ env.deploy-tar-name }} ./build
