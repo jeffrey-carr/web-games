@@ -1,8 +1,9 @@
 package services
 
 import (
-	"binoku/entities"
 	"net/http"
+	"web_games/entities"
+	"web_games/utils"
 )
 
 // Handler represents a handler
@@ -16,12 +17,12 @@ type Handler interface {
 }
 
 type handler struct {
-	config             entities.Config
+	config             utils.Config
 	defaultMiddlewares []entities.Middleware
 }
 
 // NewHandler creates a new Handler
-func NewHandler(config entities.Config, defaultMiddlewares []entities.Middleware) Handler {
+func NewHandler(config utils.Config, defaultMiddlewares []entities.Middleware) Handler {
 	return handler{
 		config:             config,
 		defaultMiddlewares: defaultMiddlewares,
@@ -34,6 +35,9 @@ func (h handler) Handle(
 	handle func(w http.ResponseWriter, r *http.Request),
 	middlewares ...entities.Middleware,
 ) {
+	localMiddlewares := make([]entities.Middleware, len(middlewares))
+	copy(localMiddlewares, middlewares)
+
 	http.HandleFunc(
 		slug,
 		func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +46,7 @@ func (h handler) Handle(
 				return
 			}
 
-			w, r = h.applyMiddlewares(w, r, middlewares...)
+			w, r = h.applyMiddlewares(w, r, localMiddlewares...)
 
 			handle(w, r)
 		},

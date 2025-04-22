@@ -76,3 +76,20 @@ func Map[T any, U any](slice []T, f func(item T) U) []U {
 
 	return mapped
 }
+
+// Filter filters out items that do not pass f
+func Filter[T comparable](slice []T, f func(item T) bool) []T {
+	validItems := []T{}
+	for _, item := range slice {
+		if f(item) {
+			validItems = append(validItems, item)
+		}
+	}
+
+	return validItems
+}
+
+// GetRandomItem gets a random item from a slice
+func GetRandomItem[T any](slice []T) T {
+	return slice[rand.Intn(len(slice))]
+}

@@ -1,18 +1,23 @@
 package middleware
 
 import (
-	"binoku/entities"
 	"net/http"
+	"web_games/utils"
 )
 
 // Cors represents cors middleware
 type Cors struct {
-	config entities.Config
+	config utils.Config
 }
 
 // NewCors creates a new cors middleware
-func NewCors(config entities.Config) Cors {
+func NewCors(config utils.Config) Cors {
 	return Cors{config: config}
+}
+
+// GetName gets the name of the middleware
+func (c Cors) GetName() string {
+	return "CORS"
 }
 
 // Apply applies the cors middleware

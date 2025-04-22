@@ -1,8 +1,8 @@
 package binoku
 
 import (
-	"binoku/utils"
 	"slices"
+	"web_games/utils"
 )
 
 // GameManager represents a game manager

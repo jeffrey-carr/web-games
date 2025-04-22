@@ -1,4 +1,10 @@
-package entities
+package utils
+
+import (
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
 
 // EnvironmentDeployment respresents the deployment environment
 type EnvironmentDeployment string
@@ -19,4 +25,32 @@ type Config struct {
 	Port           int                   `yaml:"port"`
 	FullCertPath   string                `yaml:"fullCertPath"`
 	PrivateKeyPath string                `yaml:"privateKeyPath"`
+
+	WordLadder WordLadderConfig `yaml:"wordLadder"`
+}
+
+// WordLadderConfig is the configuration for the WordLadder game
+type WordLadderConfig struct {
+	// MaxServers is the maxmium number of servers (concurrent games)
+	MaxServers int `yaml:"maxServers"`
+	// MaxPlayersPerServer is the maximum number of players per game
+	MaxPlayersPerServer int `yaml:"maxPlayersPerServer"`
+}
+
+// ReadConfig reads the provided configuration file
+func ReadConfig(filename string) (Config, error) {
+	// Load file
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		return Config{}, err
+	}
+
+	// Read file into entity
+	var config Config
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return config, nil
 }

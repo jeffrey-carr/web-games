@@ -1,3 +1,6 @@
 environment: dev
 frontendDomain: http://localhost:5173
 port: 3001
+wordLadder:
+  maxServers: 5
+  maxPlayersPerServer: 2

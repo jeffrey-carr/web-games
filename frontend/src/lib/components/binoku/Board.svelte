@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { BoardStyle, Coordinate, InvalidHint } from '$lib/types';
-	import { resizeObserver, Stack } from '$lib/utils';
+	import { resizeObserver } from '$lib/utils';
+	import { Stack } from '$lib/objects';
 	import Button from '$lib/components/common/Button.svelte';
 	import Cell from '$lib/components/binoku/Cell.svelte';
 

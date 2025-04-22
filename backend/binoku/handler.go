@@ -17,9 +17,9 @@ type handler struct {
 }
 
 // NewHandler creates a new Binoku handler
-func NewHandler() Handler {
+func NewHandler(controller GameManager) Handler {
 	return handler{
-		controller: NewGameManager(),
+		controller: controller,
 	}
 }
 

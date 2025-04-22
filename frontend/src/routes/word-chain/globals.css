@@ -1,0 +1,9 @@
+html {
+  --wc-primary: #D6D5C9;
+  --wc-secondary: #B9BAA3;
+  --wc-highlight: #A22C29;
+  --wc-correct: #71b340;
+  --wc-text: #D6D5C9;
+  
+  color: var(--wc-primary);
+}
