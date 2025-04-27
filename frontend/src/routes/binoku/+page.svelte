@@ -18,7 +18,7 @@
 	};
 
 	// Board
-	const SIZES = [4, 6, 8] as const;
+	const SIZES = [4, 6, 8, 10] as const;
 	type BoardSize = (typeof SIZES)[number];
 	let board = $state<number[][]>([]);
 	let lockedCells = $state<Coordinate[]>([]);

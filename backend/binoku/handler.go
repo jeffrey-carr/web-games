@@ -99,7 +99,7 @@ func (h handler) validateSize(size int) (bool, string) {
 	if size < 4 {
 		return false, "Minimum board size is 4"
 	}
-	if size > 8 {
+	if size > 10 {
 		return false, "Maximum board size is 8"
 	}
 
